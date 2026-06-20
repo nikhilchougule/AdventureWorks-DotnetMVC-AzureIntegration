@@ -1,0 +1,209 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+@{
+    ViewBag.Title = "Create Order";
+}
+
+<h2>Create New Order</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<form id="createOrderForm" method="post" action="@Url.Action("Create","Orders")">
+    @Html.AntiForgeryToken()
+
+    <div style="display:flex; gap:30px; margin-bottom:20px; flex-wrap:wrap;">
+
+        <div>
+            <label><strong>Customer</strong></label><br />
+            <input id="ddlCustomer" name="customerId" style="width:280px" />
+        </div>
+
+        <div>
+            <label><strong>Due Date</strong></label><br />
+            <input id="dpDueDate" name="dueDate" style="width:160px" />
+        </div>
+
+    </div>
+
+    <!-- Line Items Grid -->
+    <h4>Line Items</h4>
+    <div id="lineItemsGrid" style="margin-bottom:15px;"></div>
+    <button type="button" class="k-button" onclick="addLineItem()">+ Add Product</button>
+
+    <!-- Summary -->
+    <div style="margin-top:20px; text-align:right;">
+        <strong>Order Total: </strong>
+        <span id="orderTotal" style="font-size:1.2em; color:#333;">$0.00</span>
+    </div>
+
+    <!-- Hidden field carries line items JSON to controller -->
+    <input type="hidden" id="lineItemsJson" name="lineItemsJson" />
+
+    <div style="margin-top:20px;">
+        <button type="button" class="k-button k-button-solid-primary" onclick="submitOrder()">
+            Place Order &amp; Send to Queue
+        </button>
+        <a href="@Url.Action("Index","Orders")" class="k-button" style="margin-left:10px;">Cancel</a>
+    </div>
+</form>
+
+@section scripts {
+    <script>
+    // Seed product data from server for client-side lookup
+    var productData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Products));
+
+    // Line items array maintained in JS
+    var lineItems = [];
+
+    // ── Customer DropDownList ─────────────────────────────────
+    $("#ddlCustomer").kendoDropDownList({
+        dataSource:     @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Customers)),
+        dataTextField:  "FullName",
+        dataValueField: "CustomerID",
+        optionLabel:    "-- Select Customer --",
+        filter:         "contains"
+    });
+
+    // ── Due Date DatePicker ───────────────────────────────────
+    $("#dpDueDate").kendoDatePicker({
+        format:  "MM/dd/yyyy",
+        min:     new Date(),
+        value:   kendo.date.addDays(new Date(), 7)
+    });
+
+    // ── Line Items Grid ───────────────────────────────────────
+    var lineItemsDataSource = new kendo.data.DataSource({
+        data: lineItems,
+        schema: {
+            model: {
+                id: "rowId",
+                fields: {
+                    rowId:       { type: "number" },
+                    ProductID:   { type: "number",  validation: { required: true } },
+                    ProductName: { type: "string" },
+                    OrderQty:    { type: "number",  validation: { required: true, min: 1 } },
+                    UnitPrice:   { type: "number",  validation: { required: true, min: 0 } },
+                    LineTotal:   { type: "number" }
+                }
+            }
+        }
+    });
+
+    $("#lineItemsGrid").kendoGrid({
+        dataSource: lineItemsDataSource,
+        editable:   "inline",
+        columns: [
+            {
+                field: "ProductID", title: "Product", width: 280,
+                editor: function(container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataSource:     productData,
+                            dataTextField:  "Name",
+                            dataValueField: "ProductID",
+                            filter:         "contains",
+                            change: function() {
+                                var selected = this.dataItem();
+                                var grid     = $("#lineItemsGrid").data("kendoGrid");
+                                var model    = grid.dataItem(container.closest("tr"));
+                                model.set("ProductName", selected.Name);
+                                model.set("UnitPrice",   selected.ListPrice);
+                                model.set("LineTotal",   selected.ListPrice * (model.OrderQty || 1));
+                                recalcTotal();
+                            }
+                        });
+                },
+                template: "#= ProductName || 'Select...' #"
+            },
+            {
+                field: "OrderQty", title: "Qty", width: 90,
+                editor: function(container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoNumericTextBox({ min: 1, max: 999, decimals: 0, format: "n0" });
+                }
+            },
+            {
+                field: "UnitPrice", title: "Unit Price", width: 120,
+                format: "{0:c2}",
+                editor: function(container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoNumericTextBox({ min: 0, decimals: 2, format: "c2" });
+                }
+            },
+            { field: "LineTotal", title: "Line Total", width: 120, format: "{0:c2}", editable: false },
+            {
+                command: [{
+                    name: "destroy", text: "Remove",
+                    click: function() { setTimeout(recalcTotal, 100); }
+                }],
+                width: 90
+            }
+        ],
+        save: function() { setTimeout(recalcTotal, 100); }
+    });
+
+    // ── Add row ───────────────────────────────────────────────
+    function addLineItem() {
+        var grid = $("#lineItemsGrid").data("kendoGrid");
+        grid.addRow();
+    }
+
+    // ── Recalculate order total ───────────────────────────────
+    function recalcTotal() {
+        var data  = lineItemsDataSource.data();
+        var total = 0;
+        data.forEach(function(item) {
+            var lineTotal = (item.UnitPrice || 0) * (item.OrderQty || 0);
+            item.set("LineTotal", lineTotal);
+            total += lineTotal;
+        });
+        // Add tax (8%) + freight (2%)
+        total = total * 1.10;
+        $("#orderTotal").text(kendo.toString(total, "c2"));
+    }
+
+    // ── Submit ────────────────────────────────────────────────
+    function submitOrder() {
+        var customer = $("#ddlCustomer").data("kendoDropDownList").value();
+        if (!customer) { alert("Please select a customer."); return; }
+
+        var dueDate = $("#dpDueDate").data("kendoDatePicker").value();
+        if (!dueDate) { alert("Please select a due date."); return; }
+        // Write ISO format so server parse is culture-independent
+        $("#dpDueDate").val(kendo.toString(dueDate, "yyyy-MM-dd"));
+
+        // Sync any in-edit rows
+        var grid = $("#lineItemsGrid").data("kendoGrid");
+        grid.saveChanges();
+
+        var data = lineItemsDataSource.data();
+        if (!data.length) { alert("Please add at least one line item."); return; }
+
+        // Build clean array for POST — skip rows missing required values
+        var items = [];
+        data.forEach(function(item) {
+            if (item.ProductID && item.OrderQty > 0 && item.UnitPrice >= 0) {
+                items.push({
+                    ProductID:   item.ProductID,
+                    ProductName: item.ProductName,
+                    OrderQty:    item.OrderQty,
+                    UnitPrice:   item.UnitPrice
+                });
+            }
+        });
+        if (!items.length) { alert("Please complete all line items. Quantity must be greater than 0."); return; }
+
+        $("#lineItemsJson").val(JSON.stringify(items));
+        $("#createOrderForm").submit();
+    }
+    </script>
+}

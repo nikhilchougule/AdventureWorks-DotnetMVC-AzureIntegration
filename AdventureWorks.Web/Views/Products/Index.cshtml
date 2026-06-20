@@ -1,0 +1,88 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Products</h2>
+
+<div style="margin-bottom:12px; display:flex; gap:10px; align-items:center;">
+    <input id="txtSearch" class="k-textbox" placeholder="Search by name or number..." style="width:280px" />
+    <button class="k-button k-button-solid-primary" onclick="applySearch()">Search</button>
+    <button class="k-button" onclick="clearSearch()">Clear</button>
+</div>
+
+<div id="productsGrid"></div>
+
+@section scripts {
+    <script>
+    $("#productsGrid").kendoGrid({
+        dataSource: {
+            transport: {
+                read: {
+                    url:      "@Url.Action("GetProducts","Products")",
+                    type:     "POST",
+                    dataType: "json",
+                    contentType: "application/json"
+                },
+                parameterMap: function (data, type) {
+                    return kendo.stringify(data);
+                }
+            },
+            schema: {
+                data:  "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    fields: {
+                        ProductID:     { type: "number" },
+                        Name:          { type: "string" },
+                        ProductNumber: { type: "string" },
+                        ListPrice:     { type: "number" },
+                        StandardCost:  { type: "number" },
+                        Weight:        { type: "number" },
+                        SellStartDate: { type: "date" }
+                    }
+                }
+            },
+            pageSize:        10,
+            serverPaging:    true,
+            serverSorting:   true,
+            serverFiltering: true
+        },
+        pageable: {
+            refresh:   true,
+            pageSizes: [10, 25, 50]
+        },
+        sortable:   true,
+        filterable: true,
+        resizable:  true,
+        columns: [
+            { field: "ProductID",     title: "ID",            width: 70  },
+            { field: "Name",          title: "Product Name",  width: 220 },
+            { field: "ProductNumber", title: "Number",        width: 130 },
+            { field: "Color",         title: "Color",         width: 100 },
+            { field: "ListPrice",     title: "List Price",    width: 110, format: "{0:c2}" },
+            { field: "StandardCost",  title: "Cost",          width: 110, format: "{0:c2}" },
+            { field: "Weight",        title: "Weight",        width: 90  },
+            { field: "ProductLine",   title: "Line",          width: 70  },
+            { field: "Class",         title: "Class",         width: 70  },
+            { field: "SellStartDate", title: "Sell Start",    width: 110, format: "{0:MM/dd/yyyy}" }
+        ]
+    });
+
+    function applySearch() {
+        var grid = $("#productsGrid").data("kendoGrid");
+        grid.dataSource.filter({
+            logic: "or",
+            filters: [
+                { field: "Name",          operator: "contains", value: $("#txtSearch").val() },
+                { field: "ProductNumber", operator: "contains", value: $("#txtSearch").val() }
+            ]
+        });
+    }
+
+    function clearSearch() {
+        $("#txtSearch").val("");
+        $("#productsGrid").data("kendoGrid").dataSource.filter({});
+    }
+    </script>
+}

@@ -1,0 +1,39 @@
+@model Kendo.Mvc.Examples.Models.ProductViewModel
+
+<div class="k-form k-form-md">
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="ProductName">Product Name</label>
+        <div class="k-form-field-wrap">
+            @Html.Kendo().TextBoxFor(m => m.ProductName).ToClientTemplate()
+        </div>
+    </div>
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="UnitPrice">Unit Price</label>
+        <div class="k-form-field-wrap">
+            @Html.Kendo().NumericTextBoxFor(m => m.UnitPrice).ToClientTemplate()
+        </div>
+    </div>
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="UnitsInStock">Units in Stock</label>
+        <div class="k-form-field-wrap">
+            @Html.Kendo().NumericTextBoxFor(m => m.UnitsInStock).ToClientTemplate()
+        </div>
+    </div>
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="QuantityPerUnit">Quantity Per Unit</label>
+        <div class="k-form-field-wrap">
+            @Html.Kendo().TextBoxFor(m => m.QuantityPerUnit).ToClientTemplate()
+        </div>
+    </div>
+    <div class="k-form-field">
+        <label class="k-label k-form-label" for="Category">Category</label>
+        <div class="k-form-field-wrap">
+            @(Html.Kendo().DropDownListFor(m => m.Category)
+                .DataValueField("CategoryID")
+                .DataTextField("CategoryName")
+                .AdaptiveMode(AdaptiveMode.Auto)
+                .BindTo((System.Collections.IEnumerable)ViewData["categories"]).ToClientTemplate()
+                )
+        </div>
+    </div>
+</div>
