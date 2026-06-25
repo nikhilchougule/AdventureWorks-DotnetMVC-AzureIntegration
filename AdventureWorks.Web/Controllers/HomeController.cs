@@ -1,10 +1,11 @@
-﻿using AdventureWorks.Web.Repositories;
+﻿using AdventureWorks.Web.Filters;
+using AdventureWorks.Web.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using System.Web;
 using System.Linq.Dynamic;
+using System.Web;
 using System.Web.Mvc;
 
 namespace AdventureWorks.Web.Controllers
@@ -12,6 +13,9 @@ namespace AdventureWorks.Web.Controllers
     public class HomeController : Controller
     {
         private string _connectionString => ConfigurationManager.ConnectionStrings["AzureSqlAdventureWorks"].ConnectionString;
+
+        [LogResultFilter]
+        [LogActionFilter]
         public ActionResult Index()
         {
             string search = null;
@@ -48,7 +52,6 @@ namespace AdventureWorks.Web.Controllers
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
-
 
             return View();
         }
