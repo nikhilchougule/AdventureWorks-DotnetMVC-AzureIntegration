@@ -2,6 +2,12 @@
   <Folder Name="/AzureServices/">
     <Project Path="AzureServices/OrderFunctions/OrderFunctions.csproj" Id="4ef5ae79-6872-4a77-b67b-ecc86c8d35f2" />
   </Folder>
+  <Folder Name="/SQL/">
+    <File Path="SQL/01_Beginner.sql" />
+    <File Path="SQL/02_Intermediate.sql" />
+    <File Path="SQL/03_Advanced.sql" />
+    <File Path="SQL/04_Expert.sql" />
+  </Folder>
   <Project Path="AdventureWorks.Web.Tests/AdventureWorks.Web.Tests.csproj" Id="5d4f0282-5c2a-4512-8593-cb43a6c826ea" />
   <Project Path="AdventureWorks.Web/AdventureWorks.Web.csproj" Id="d244e6f6-7714-4d34-9569-7e7199ca986e" />
 </Solution>

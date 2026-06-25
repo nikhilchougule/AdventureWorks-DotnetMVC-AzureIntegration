@@ -86,3 +86,33 @@
     }
     </script>
 }
+
+<div id="productsGrid2">
+
+</div>
+
+@*@section scripts{
+    <script>
+        $('productsGrid').kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '',
+                        type: '',
+                        dataType: '',
+                        contentType:''
+                    },
+                    parameterMap: function (data, type) {
+                        kendo.stringify(data);
+                    }
+                },
+                schema: {
+                    data:,
+                    total:,
+                    errors:,
+                    model:
+                }
+            }
+        })
+    </script>
+    }*@
